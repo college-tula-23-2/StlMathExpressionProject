@@ -99,7 +99,7 @@ void MathExpression::CreatePostfix()
                 postfixExpression.push_back(stackOperators.top());
                 stackOperators.pop();
             }
-            stackOperators.pop();
+            stackOperators.pop(); 
         }
 
         position++;
