@@ -48,6 +48,8 @@ void MathExpression::CreatePostfix()
 {
     std::stack<char> stackOperators;
     int position{};
+    bool isUnare = true;
+
     while (position < infixExpression.length())
     {
         char symbol = infixExpression[position];
@@ -58,11 +60,11 @@ void MathExpression::CreatePostfix()
             position++;
             continue;
         }
-            
 
         // numbers
         if (isdigit(symbol) || symbol == '.')
         {
+            isUnare = false;
             std::string number{ "" };
             if (symbol == '.')
                 number.push_back('0');
@@ -88,12 +90,16 @@ void MathExpression::CreatePostfix()
         }
 
         // open brackets
-        if (openBrackets.find(symbol) != std::string::npos)
+        if (openBrackets.find(symbol) != std::string::npos) {
+            isUnare = true;
             stackOperators.push(symbol);
+        }
+            
 
         // close brackets
         if (closeBrackets.find(symbol) != std::string::npos)
         {
+            isUnare = false;
             while (openBrackets.find(stackOperators.top()) == std::string::npos)
             {
                 postfixExpression.push_back(stackOperators.top());
@@ -102,6 +108,96 @@ void MathExpression::CreatePostfix()
             stackOperators.pop(); 
         }
 
+        // multiplex operations
+        if (multOperators.find(symbol) != std::string::npos)
+        {
+            isUnare = true;
+            while (!stackOperators.empty()
+                && multOperators.find(stackOperators.top()) != std::string::npos)
+            {
+                postfixExpression.push_back(stackOperators.top());
+                stackOperators.pop();
+            }
+            stackOperators.push(symbol);
+        }
+
+        // additive operations
+        if (addOperators.find(symbol) != std::string::npos)
+        {
+            if (symbol == '-' && isUnare)
+            {
+                postfixExpression.push_back('~');
+                isUnare = false;
+                position++;
+                continue;
+            }
+
+            isUnare = true;
+            while (!stackOperators.empty()
+                && operators.find(stackOperators.top()) != std::string::npos)
+            {
+                postfixExpression.push_back(stackOperators.top());
+                stackOperators.pop();
+            }
+            stackOperators.push(symbol);
+        }
         position++;
     }
+
+    while (!stackOperators.empty())
+    {
+        postfixExpression.push_back(stackOperators.top());
+        stackOperators.pop();
+    }
+}
+
+double MathExpression::Calculate()
+{
+    std::stack<double> stackOperands;
+
+    for (int position{}; position < postfixExpression.length(); position++)
+    {
+        char symbol = postfixExpression[position];
+
+        if (isdigit(symbol) || symbol == '~')
+        {
+            std::string operand = "";
+            if (symbol == '~')
+            {
+                operand.push_back('-');
+                symbol = postfixExpression[++position];
+            }
+                
+
+            while (symbol != '#')
+            {
+                operand.push_back(symbol);
+                symbol = postfixExpression[++position];
+            }
+            stackOperands.push(std::stod(operand));
+            continue;
+        }
+        if (operators.find(symbol) != std::string::npos)
+        {
+            double result{};
+            double rightOperand = stackOperands.top(); 
+            stackOperands.pop();
+
+            double leftOperand = stackOperands.top();
+            stackOperands.pop();
+
+            switch (symbol)
+            {
+            case '+': result = leftOperand + rightOperand; break;
+            case '-': result = leftOperand - rightOperand; break;
+            case '*': result = leftOperand * rightOperand; break;
+            case '/': result = leftOperand / rightOperand; break;
+            default:
+                break;
+            }
+
+            stackOperands.push(result);
+        }
+    }
+    return stackOperands.top();
 }

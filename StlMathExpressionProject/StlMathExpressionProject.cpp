@@ -5,9 +5,10 @@
 
 int main()
 {
-    MathExpression expr("(10.05 + {.20e2 - 4.0e-2} * 3)");
+    MathExpression expr("(-5 + 7) * -6");
 
     std::cout << expr.CheckBrackets() << "\n";
     expr.CreatePostfix();
     std::cout << expr.PostfixExpression() << "\n";
+    std::cout << "Result = " << expr.Calculate() << "\n";
 }
